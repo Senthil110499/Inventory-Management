@@ -1,0 +1,98 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id        Int        @id @default(autoincrement())
+  name      String
+  email     String     @unique
+  password  String
+  createdAt DateTime   @default(now())
+  orders    Order[]
+  bills     Bill[]
+  customers Customer[]
+}
+
+model Category {
+  id          String      @id @default(uuid())
+  name        String
+  description String?
+  added_by    String?
+  updated_by  String?
+  created_at  DateTime    @default(now())
+  updated_at  DateTime    @updatedAt
+  inventories Inventory[]
+}
+
+model Inventory {
+  id          Int         @id @default(autoincrement())
+  name        String
+  description String?
+  price       Float
+  quantity    Int
+  categoryId  String
+  category    Category    @relation(fields: [categoryId], references: [id])
+  orderItems  OrderItem[]
+  billItems   BillItem[]
+}
+
+model Customer {
+  id      Int      @id @default(autoincrement())
+  name    String
+  email   String?
+  phone   String?
+  address String?
+  userId  Int?
+  user    User?    @relation(fields: [userId], references: [id])
+  orders  Order[]
+  bills   Bill[]
+}
+
+model Order {
+  id         Int         @id @default(autoincrement())
+  customerId Int
+  customer   Customer    @relation(fields: [customerId], references: [id])
+  userId     Int
+  user       User        @relation(fields: [userId], references: [id])
+  items      OrderItem[]
+  total      Float
+  date       DateTime    @default(now())
+  bill       Bill?
+}
+
+model OrderItem {
+  id          Int       @id @default(autoincrement())
+  orderId     Int
+  order       Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  inventoryId Int
+  inventory   Inventory @relation(fields: [inventoryId], references: [id])
+  quantity    Int
+}
+
+model Bill {
+  id          Int        @id @default(autoincrement())
+  orderId     Int        @unique
+  order       Order      @relation(fields: [orderId], references: [id])
+  userId      Int
+  user        User       @relation(fields: [userId], references: [id])
+  customerId  Int
+  customer    Customer   @relation(fields: [customerId], references: [id])
+  items       BillItem[]
+  totalAmount Float
+  date        DateTime   @default(now())
+}
+
+model BillItem {
+  id          Int       @id @default(autoincrement())
+  billId      Int
+  bill        Bill      @relation(fields: [billId], references: [id], onDelete: Cascade)
+  inventoryId Int
+  inventory   Inventory @relation(fields: [inventoryId], references: [id])
+  quantity    Int
+  price       Float
+}
